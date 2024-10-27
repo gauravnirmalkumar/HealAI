@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "893121864908",
+    "project_id": "diabeticfootulcer-caf70",
+    "storage_bucket": "diabeticfootulcer-caf70.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:893121864908:android:1a868522d2a04861aa4e69",
+        "android_client_info": {
+          "package_name": "com.example.woundly"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBCwuyZ1gx7nPWiRGt9LhjuUVHKqjNLV_Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
