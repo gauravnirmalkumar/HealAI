@@ -40,7 +40,7 @@ class MyApp extends StatelessWidget {
         '/startup': (context) => const StartupScreen(),
         '/login': (context) => const LoginPage(),
         '/signup': (context) => const SignupPage(),
-        '/doctor_dashboard': (context) => const DoctorDashboard(),
+        '/doctor_dashboard': (context) => DoctorDashboard(),
         
       },
     );
@@ -63,7 +63,7 @@ class AuthWrapper extends StatelessWidget {
             builder: (context, userTypeSnapshot) {
               if (userTypeSnapshot.hasData) {
                 if (userTypeSnapshot.data == 'doctor') {
-                  return const DoctorDashboard();
+                  return DoctorDashboard();
                 } else {
                   
                 }

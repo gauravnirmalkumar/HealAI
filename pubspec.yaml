@@ -36,6 +36,7 @@ dependencies:
   fluttertoast: ^8.2.8
   http: ^1.2.2
   permission_handler: ^11.3.1
+  intl: ^0.17.0
 
   # Add any other dependencies you need
 
