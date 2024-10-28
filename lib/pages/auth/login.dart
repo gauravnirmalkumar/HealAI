@@ -95,7 +95,7 @@ class LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF00B0A6),
+      backgroundColor: const Color(0xff15A196),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -145,7 +145,7 @@ class LoginPageState extends State<LoginPage> {
                         const Text(
                           "Doctor's Sign In",
                           style: TextStyle(
-                            color: Color(0xFF00B0A6),
+                            color: Color(0xff15A196),
                             fontSize: 28,
                             fontWeight: FontWeight.w600,
                           ),
@@ -211,7 +211,7 @@ class LoginPageState extends State<LoginPage> {
                                   _keepSignedIn = value ?? false;
                                 });
                               },
-                              activeColor: const Color(0xFF00B0A6),
+                              activeColor: const Color(0xff15A196),
                             ),
                             const Text(
                               'Keep me signed in',
@@ -258,7 +258,7 @@ class LoginPageState extends State<LoginPage> {
                         ElevatedButton(
                           onPressed: _isLoading ? null : _login,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF00B0A6),
+                            backgroundColor: const Color(0xff15A196),
                             foregroundColor: Colors.white,
                             minimumSize: const Size(double.infinity, 56),
                             shape: RoundedRectangleBorder(
@@ -312,7 +312,7 @@ class LoginPageState extends State<LoginPage> {
                                 children: [
                                   TextSpan(
                                     text: 'Sign Up',
-                                    style: TextStyle(color: Color(0xFF00B0A6), fontSize: 16),
+                                    style: TextStyle(color: Color(0xff15A196), fontSize: 16),
                                   ),
                                 ],
                               ),

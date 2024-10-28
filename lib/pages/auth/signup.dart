@@ -72,7 +72,7 @@ class _SignupPageState extends State<SignupPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF00B0A6),
+      backgroundColor: const Color(0xff15A196),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -114,7 +114,7 @@ class _SignupPageState extends State<SignupPage> {
                         const Text(
                           "Create Doctor Account",
                           style: TextStyle(
-                            color: Color(0xFF00B0A6),
+                            color: Color(0xff15A196),
                             fontSize: 28,
                             fontWeight: FontWeight.w600,
                           ),
@@ -243,7 +243,7 @@ class _SignupPageState extends State<SignupPage> {
                         ElevatedButton(
                           onPressed: _isLoading ? null : _signup,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF00B0A6),
+                            backgroundColor: const Color(0xff15A196),
                             foregroundColor: Colors.white,
                             minimumSize: const Size(double.infinity, 56),
                             shape: RoundedRectangleBorder(
@@ -272,7 +272,7 @@ class _SignupPageState extends State<SignupPage> {
                               children: [
                                 TextSpan(
                                   text: 'Sign in',
-                                  style: TextStyle(color: Color(0xFF00B0A6), fontSize: 16),
+                                  style: TextStyle(color: Color(0xff15A196), fontSize: 16),
                                 ),
                               ],
                             ),
