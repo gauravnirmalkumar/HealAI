@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:intl/intl.dart';
 
 class DoctorDashboard extends StatefulWidget {
   const DoctorDashboard({super.key});
@@ -13,120 +12,68 @@ class DoctorDashboard extends StatefulWidget {
 class DoctorDashboardState extends State<DoctorDashboard> {
   final user = FirebaseAuth.instance.currentUser;
   final TextEditingController _searchController = TextEditingController();
+  String? _doctorName;
 
   @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    _loadDoctorInfo();
+  }
+
+  Future<void> _loadDoctorInfo() async {
+    if (user != null) {
+      final doctorDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user!.uid)
+          .get();
+      
+      if (doctorDoc.exists) {
+        setState(() {
+          _doctorName = doctorDoc.data()?['name'];
+        });
+      }
+    }
+  }
+
+  Future<void> _handleSignOut() async {
+    await FirebaseAuth.instance.signOut();
+    if (!mounted) return;
+    Navigator.pushReplacementNamed(context, '/login');
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF00A19B),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              _buildHeader(),
-              const SizedBox(height: 16),
-              _buildSearchBar(),
-              const SizedBox(height: 16),
-              Expanded(
-                child: _buildPatientsList(),
-              ),
-            ],
-          ),
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: _handleSignOut,
         ),
-      ),
-      floatingActionButton: _buildAddPatientButton(),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-    );
-  }
-
-  Widget _buildHeader() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        const Icon(
-          Icons.medical_services,
-          color: Colors.white,
-          size: 24,
-        ),
-        const Text(
-          'Patients',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Row(
-            children: [
-              TextButton(
-                onPressed: _signOut,
-                child: const Text(
-                  'Log Out',
-                  style: TextStyle(
-                    color: Colors.red,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-              const CircleAvatar(
-                radius: 16,
-                backgroundColor: Color(0xFFE0E0E0),
-                child: Icon(
-                  Icons.person,
-                  size: 20,
-                  color: Colors.grey,
-                ),
-              ),
-              const SizedBox(width: 8),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSearchBar() {
-    return Container(
-      height: 48,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+        title: Text('Doctor Dashboard - $_doctorName'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: _showAddPatientForm,
           ),
         ],
       ),
-      child: TextField(
-        controller: _searchController,
-        decoration: const InputDecoration(
-          hintText: 'Search patient name',
-          hintStyle: TextStyle(
-            color: Colors.grey,
-            fontSize: 16,
-            height: 3, // Adjust this value to align the text vertically
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextField(
+              controller: _searchController,
+              decoration: const InputDecoration(
+                labelText: 'Search patients',
+                border: OutlineInputBorder(),
+              ),
+              onChanged: (value) {
+                setState(() {});
+              },
+            ),
           ),
-          prefixIcon: Icon(
-            Icons.search,
-            color: Colors.grey,
-          ),
-          border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(horizontal: 20),
-        ),
+          Expanded(child: _buildPatientsList()),
+        ],
       ),
     );
   }
@@ -134,7 +81,7 @@ class DoctorDashboardState extends State<DoctorDashboard> {
   Widget _buildPatientsList() {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
-            .collection('patients')
+          .collection('patients')
           .where('doctorId', isEqualTo: user?.uid)
           .orderBy('lastSeen', descending: true)
           .snapshots(),
@@ -144,190 +91,142 @@ class DoctorDashboardState extends State<DoctorDashboard> {
         }
 
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-            child: CircularProgressIndicator(color: Colors.white),
-          );
+          return const Center(child: CircularProgressIndicator());
         }
 
+        final patients = snapshot.data?.docs ?? [];
+        final filteredPatients = patients.where((doc) {
+          final patient = doc.data() as Map<String, dynamic>;
+          final searchTerm = _searchController.text.toLowerCase();
+          return patient['name'].toString().toLowerCase().contains(searchTerm);
+        }).toList();
+
         return ListView.builder(
-          itemCount: snapshot.data?.docs.length ?? 0,
+          itemCount: filteredPatients.length,
           itemBuilder: (context, index) {
-            final patient = snapshot.data!.docs[index].data() as Map<String, dynamic>;
-            return _buildPatientCard(patient, snapshot.data!.docs[index].id);
+            final patientDoc = filteredPatients[index];
+            final patient = patientDoc.data() as Map<String, dynamic>;
+            return _buildPatientTile(patientDoc.id, patient);
           },
         );
       },
     );
   }
 
-  Widget _buildPatientCard(Map<String, dynamic> patient, String patientId) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  patient['name'] ?? 'Patient',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black87,
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () => _deletePatient(patientId),
-                  child: const Text(
-                    'Delete Record',
-                    style: TextStyle(
-                      color: Colors.red,
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Last seen ${DateFormat('dd MMMM yyyy').format(
-                (patient['lastSeen'] as Timestamp).toDate(),
-              )}',
-              style: const TextStyle(
-                color: Colors.grey,
-                fontSize: 14,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Total Records',
-                  style: TextStyle(
-                    color: Colors.black87,
-                    fontSize: 14,
-                  ),
-                ),
-                Text(
-                  '${patient['totalRecords'] ?? 0}',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              height: 36,
-              child: ElevatedButton(
-                onPressed: () => _viewReport(patientId),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF00A19B),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: const Text(
-                  'View Report',
-                  style: TextStyle(fontSize: 14),
-                ),
-              ),
-            ),
-          ],
+  Widget _buildPatientTile(String patientId, Map<String, dynamic> patient) {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      child: ListTile(
+        title: Text(patient['name'] ?? 'Unnamed Patient'),
+        subtitle: StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('medical_reports')
+              .where('patientId', isEqualTo: patientId)
+              .snapshots(),
+          builder: (context, snapshot) {
+            int reportCount = snapshot.data?.docs.length ?? 0;
+            return Text(
+              'ID: $patientId\nReports: $reportCount\nPhone: ${patient['phone']}',
+            );
+          },
+        ),
+        trailing: IconButton(
+          icon: const Icon(Icons.add_chart),
+          onPressed: () => _showAddReportForm(patientId),
         ),
       ),
     );
   }
 
-  Widget _buildAddPatientButton() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: SizedBox(
-        height: 48,
-        width: double.infinity,
-        child: ElevatedButton.icon(
-          onPressed: _showAddPatientForm,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.white,
-            foregroundColor: const Color(0xFF00A19B),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(24),
-            ),
-          ),
-          icon: const Icon(Icons.add),
-          label: const Text(
-            'Add Patient',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
-      ),
+  void _showAddReportForm(String patientId) {
+    // Implement report addition form
+    showDialog(
+      context: context,
+      builder: (context) => AddReportDialog(patientId: patientId, doctorId: user?.uid ?? ''),
     );
-  }
-
-  Future<void> _deletePatient(String patientId) async {
-    try {
-      await FirebaseFirestore.instance
-          .collection('patients')
-          .doc(patientId)
-          .delete();
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Patient record deleted')),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error deleting patient record')),
-      );
-    }
-  }
-
-  void _viewReport(String patientId) {
-    // Navigate to patient report screen
-    Navigator.pushNamed(context, '/patient-report', arguments: patientId);
-  }
-
-  Future<void> _signOut() async {
-    await FirebaseAuth.instance.signOut();
-    if (!mounted) return;
-    Navigator.pushReplacementNamed(context, '/login');
   }
 
   void _showAddPatientForm() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => const AddPatientForm(),
+      builder: (context) => AddPatientForm(doctorId: user?.uid ?? ''),
     );
   }
 }
 
+class AddReportDialog extends StatefulWidget {
+  final String patientId;
+  final String doctorId;
+
+  const AddReportDialog({
+    required this.patientId,
+    required this.doctorId,
+    super.key,
+  });
+
+  @override
+  AddReportDialogState createState() => AddReportDialogState();
+}
+
+class AddReportDialogState extends State<AddReportDialog> {
+  final _reportController = TextEditingController();
+
+  Future<void> _submitReport() async {
+    if (_reportController.text.isNotEmpty) {
+      try {
+        await FirebaseFirestore.instance.collection('medical_reports').add({
+          'patientId': widget.patientId,
+          'doctorId': widget.doctorId,
+          'content': _reportController.text,
+          'createdAt': Timestamp.now(),
+        });
+
+        if (!mounted) return;
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Report added successfully')),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error adding report: $e')),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Add New Report'),
+      content: TextField(
+        controller: _reportController,
+        decoration: const InputDecoration(
+          labelText: 'Report Content',
+          border: OutlineInputBorder(),
+        ),
+        maxLines: 5,
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: _submitReport,
+          child: const Text('Add Report'),
+        ),
+      ],
+    );
+  }
+}
 class AddPatientForm extends StatefulWidget {
-  const AddPatientForm({super.key});
+  final String doctorId;
+
+  const AddPatientForm({
+    required this.doctorId,
+    super.key,
+  });
 
   @override
   AddPatientFormState createState() => AddPatientFormState();
@@ -336,48 +235,68 @@ class AddPatientForm extends StatefulWidget {
 class AddPatientFormState extends State<AddPatientForm> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  
-  @override
-  void dispose() {
-    _nameController.dispose();
-    super.dispose();
-  }
+  final _phoneController = TextEditingController();
+  final _ageController = TextEditingController();
+  bool _isLoading = false;
 
   Future<void> _submitForm() async {
-    if (_formKey.currentState!.validate()) {
+    if (_formKey.currentState?.validate() ?? false) {
+      setState(() {
+        _isLoading = true;
+      });
+
       try {
-        final user = FirebaseAuth.instance.currentUser;
         await FirebaseFirestore.instance.collection('patients').add({
           'name': _nameController.text,
-          'doctorId': user?.uid,
+          'phone': _phoneController.text,
+          'age': int.tryParse(_ageController.text) ?? 0,
+          'doctorId': widget.doctorId,
           'lastSeen': Timestamp.now(),
-          'totalRecords': 0,
+          'createdAt': Timestamp.now(),
         });
+
         if (!mounted) return;
         Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Patient added successfully')),
+        );
       } catch (e) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error adding patient')),
+          SnackBar(content: Text('Error adding patient: $e')),
         );
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
       }
     }
   }
 
   @override
+  void dispose() {
+    _nameController.dispose();
+    _phoneController.dispose();
+    _ageController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(
-        16,
-        16,
-        16,
-        MediaQuery.of(context).viewInsets.bottom + 16,
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+        left: 16,
+        right: 16,
+        top: 16,
       ),
       child: Form(
         key: _formKey,
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Text(
               'Add New Patient',
@@ -401,26 +320,50 @@ class AddPatientFormState extends State<AddPatientForm> {
               },
             ),
             const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _submitForm,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF00A19B),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: const Text(
-                  'Add Patient',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                  ),
-                ),
+            TextFormField(
+              controller: _phoneController,
+              decoration: const InputDecoration(
+                labelText: 'Phone Number',
+                border: OutlineInputBorder(),
               ),
+              keyboardType: TextInputType.phone,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter phone number';
+                }
+                return null;
+              },
             ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _ageController,
+              decoration: const InputDecoration(
+                labelText: 'Age',
+                border: OutlineInputBorder(),
+              ),
+              keyboardType: TextInputType.number,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter age';
+                }
+                if (int.tryParse(value) == null) {
+                  return 'Please enter a valid number';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: _isLoading ? null : _submitForm,
+              child: _isLoading
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Add Patient'),
+            ),
+            const SizedBox(height: 16),
           ],
         ),
       ),
