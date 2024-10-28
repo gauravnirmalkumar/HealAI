@@ -31,8 +31,8 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Woundly',
       theme: ThemeData(
-        primaryColor: const Color(0xff15A196),
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xff15A196)),
+        primaryColor: const Color(0xFF00B0A6),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF00B0A6)),
       ),
       initialRoute: '/',
       routes: {
