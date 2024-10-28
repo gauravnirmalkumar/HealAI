@@ -23,7 +23,7 @@ class DoctorDashboardState extends State<DoctorDashboard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF00A19B),
+      backgroundColor: const Color(0xff15A196),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -266,7 +266,7 @@ class DoctorDashboardState extends State<DoctorDashboard> {
           onPressed: _showAddPatientForm,
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.white,
-            foregroundColor: const Color(0xFF00A19B),
+            foregroundColor: const Color(0xff15A196),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(24),
             ),
@@ -406,7 +406,7 @@ class AddPatientFormState extends State<AddPatientForm> {
               child: ElevatedButton(
                 onPressed: _submitForm,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF00A19B),
+                  backgroundColor: const Color(0xff15A196),
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
