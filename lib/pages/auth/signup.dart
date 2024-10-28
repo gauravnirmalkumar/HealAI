@@ -103,7 +103,6 @@ class _SignupPageState extends State<SignupPage> {
                   ],
                   ),
                   const SizedBox(height: 40),
-                  const SizedBox(height: 40),
                   Container(
                     decoration: BoxDecoration(
                       color: Colors.white,
