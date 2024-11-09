@@ -17,6 +17,7 @@ void main() async {
     projectId: 'diabeticfootulcer-caf70',
     storageBucket: 'diabeticfootulcer-caf70.appspot.com',)
   );
+  
 
  
   runApp(const MyApp());
