@@ -1,4 +1,4 @@
-# HealAI (Woundly)
+# HealAI
 
 HealAI is an AI-powered application designed to assist diabetic patients, particularly those suffering from diabetic foot ulcers (DFU). The app enables patients to upload images of their wounds, which are analyzed using AI to calculate wound size and track healing over time. Doctors can monitor the healing process remotely, reducing the need for frequent in-person visits.
 
